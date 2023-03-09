@@ -1,2 +1,4 @@
 config.json
-./mlruns
+/mlruns
+/.ipynb_checkpoints
+/outputs
