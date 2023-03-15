@@ -1,7 +1,24 @@
 
-from funcs.myfuncs import cln_data
+import mlflow
+import pandas as pd
+import matplotlib.pyplot as plt
+from azureml.core import Workspace, Dataset
 
-experiment_name ='exp-prueba'
+import argparse
+parser = argparse.ArgumentParser(description='Process some integers.')
+parser.add_argument('--input-data', dest='raw_data',
+                    help='sum the integers (default: find the max)')
+
+args = parser.parse_args()
+print(args)
+
+#Creating the workspace
+ws = Workspace.from_config()
+
+#Linkg workspace with mlflow
+mlflow.set_tracking_uri(ws.get_mlflow_tracking_uri())
+
+experiment_name ='exp-Airlines'
 mlflow.set_experiment(experiment_name)
 
 with mlflow.start_run() as run:
