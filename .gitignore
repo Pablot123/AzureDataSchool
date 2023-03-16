@@ -2,3 +2,5 @@ config.json
 /mlruns
 /.ipynb_checkpoints
 /outputs
+train_data.csv
+pruebas.ipynb
