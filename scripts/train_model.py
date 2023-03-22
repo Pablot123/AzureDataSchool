@@ -15,18 +15,22 @@ root_logger = logging.getLogger()
 root_logger.setLevel(logging.DEBUG)
 handler = logging.FileHandler('Img_To_Local_Python.log', 'w', 'utf-8')
 root_logger.addHandler(handler)
-#run = Run.get_context()
-#train_data = run.input_datasets['output_split_train']
-#train_df = train_data.to_pandas_dataframe()
+
 
 parser = argparse.ArgumentParser("train")
-parser.add_argument('--input_data', type=str, help='data to transform')
-parser.add_argument("--output_transform", type=str, help="transformed data directory")
+parser.add_argument('--input_data_train', type=str, help='training data')
+parser.add_argument('--input_data_val', type=str, help='validation_data')
+
+parser.add_argument('--output_model', type=str, help='trained model' )
+
 
 args = parser.parse_args()
 
-train_data_path = args.input_data
+train_data_path = args.input_data_train
 train_data_file = os.path.join(train_data_path, 'train_data.csv')
+
+val_data_path = args.input_data_val
+val_data_file = os.path.join(val_data_path, 'val_data.csv')
 
 
 with mlflow.start_run() as run:
@@ -36,28 +40,6 @@ with mlflow.start_run() as run:
     y = df['Class']
 
 
-    '''
-    lr_cv = cross_validate(LogisticRegression(max_iter=400), x, y, cv=2, scoring=['balanced_accuracy', 'recall', 'precision'], return_train_score=True)
-    print('Listo regresion lineal')
-    #rf_cv = cross_validate(RandomForestClassifier(), x, y, cv=3, scoring=['balanced_accuracy', 'recall', 'precision'], return_train_score=True)
-    #print('Listo random forest')
-    svm = cross_validate(SVC(), x, y, cv = 3, scoring=['balanced_accuracy', 'recall', 'precision'], return_train_score=True)
-    print('Listo SVM')
-
-    hola =[]
-    for score_model, name_model in [(lr_cv, 'lr'), (svm, 'svm')]:
-        hola.append({
-            f'train_acc_{name_model}': np.mean(score_model['train_balanced_accuracy']),
-            f'train_recall_{name_model}': np.mean(score_model['train_recall']),
-            f'train_precision_{name_model}': np.mean(score_model['train_precision']),
-            f'test_acc_{name_model}': np.mean(score_model['test_balanced_accuracy']),
-            f'test_recall_{name_model}': np.mean(score_model['test_recall']),
-            f'test_precision_{name_model}': np.mean(score_model['test_precision'])
-        })
-
-
-    '''
-
     param_dist ={
         'penalty':['l1', 'l2', 'elasticnet'],
         'C': [c/10 for c in range(1,20,5)],
@@ -65,16 +47,11 @@ with mlflow.start_run() as run:
 
     }
     clf = RandomizedSearchCV(LogisticRegression(), param_dist, n_iter=5, random_state=0, refit='balanced_accuracy')
-    '''
-    mlflow.log_params({
-        'penalty': 'l2',
-        'C': 1.0,
-        'solver':'lbfgs'
-    })
-    '''
+   
     clf.fit(x,y)
 
-    mlflow.sklearn.log_model(clf, artifact_path='skleran-model')
+
+    
     mlflow.log_params(clf.best_params_)
 
     y_pred = clf.predict(x)
@@ -83,10 +60,7 @@ with mlflow.start_run() as run:
     precision = precision_score(y, y_pred)
     acc = accuracy_score(y, y_pred)
     conf_matrix = confusion_matrix(y, y_pred)
-    #print(recall)
-    #print(precision)
-    #print(acc)
-    #print(conf_matrix)
+  
 
     logging.info(f'matriz de confusion{conf_matrix}')
 
@@ -97,10 +71,15 @@ with mlflow.start_run() as run:
         'accuracy': acc,
 
     })
+    #model_uri = f"runs:/{run.info.run_id}/sklearn-model"
+    mlflow.sklearn.log_model(sk_model = clf,
+                             artifact_path = "sklearn-model")
+
     
+    if not( args.output_model is None ):
+        model_path = os.path.join(args.output_model, 'sklearn-model')
+        mlflow.sklearn.save_model(sk_model=clf,
+                                  path=model_path)
 
-#model_uri = f"runs:/{run.info.run_id}/sklearn-model"
-#mv = mlflow.register_model(model_uri, "LogisticRegressionModel")
-#logging.info("Name: {}".format(mv.name))
-#logging.info("Version: {}".format(mv.version))
 
+    
