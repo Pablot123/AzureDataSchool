@@ -2,12 +2,12 @@ from azureml.core import Run
 import argparse
 import mlflow
 from sklearn.model_selection import train_test_split
+from azureml.core import Dataset
 import os
 import pandas as pd
 
-run =Run.get_context()
-#transformed_data = run.input_datasets['transformed_data']
-#transformed_df = transformed_data.to_pandas_dataframe()
+
+ws = Run.get_context().experiment.workspace
 
 parser = argparse.ArgumentParser("split")
 parser.add_argument('--input_data', type=str, help='data')
@@ -28,12 +28,28 @@ def write_output(df, path, name_file):
     mlflow.log_artifact(path+name_file)
 
 with mlflow.start_run():
+
     transformed_df = pd.read_csv(transformed_data_file)
     train_data, test_data = train_test_split(transformed_df, test_size=0.20, random_state=73)
     train_data, val_data = train_test_split(train_data, train_size=0.80, random_state=37)
     train_data.reset_index(inplace=True, drop=True)
     test_data.reset_index(inplace=True, drop=True)
     val_data.reset_index(inplace=True, drop=True)
+
+    #registro de los datasets
+    datastore = ws.get_default_datastore()
+
+    train_data_reg = Dataset.Tabular.register_pandas_dataframe(train_data,
+                                                           target=datastore,
+                                                           name='airlines_train_data')
+    test_data_reg = Dataset.Tabular.register_pandas_dataframe(test_data,
+                                                          target=datastore,
+                                                          name='airlines_test_data')
+    val_data_reg = Dataset.Tabular.register_pandas_dataframe(val_data,
+                                                         target = datastore,
+                                                         name='airlines_val_data')
+
+
 
     if not( args.output_train_data is None and args.output_test_data is None):
 

@@ -37,7 +37,7 @@ with mlflow.start_run() as run:
     
     
     # comparar con el mejor modelo
-    if actual_accuracy >= best_accuracy:
+    if actual_accuracy > best_accuracy:
         #registrar el modelo
         print(f'ModelPath: {args.model_out}')
         model_name = 'airlines_model'
