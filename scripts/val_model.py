@@ -16,7 +16,7 @@ with mlflow.start_run() as run:
     )
 
     #metricas actuales
-    recent_run = runs[['run_id', 'metrics.accuracy', 'metrics.recall', 'metrics.precision', 'end_time' ]].loc[(runs['tags.mlflow.source.name'] == 'train_model.py') & (runs['status'] == 'FINISHED')].sort_values(by='end_time', ascending=False).head(1)
+    recent_run = runs[['run_id', 'metrics.accuracy validation', 'metrics.recall validation', 'metrics.precision validation', 'end_time' ]].loc[(runs['tags.mlflow.source.name'] == 'train_model.py') & (runs['status'] == 'FINISHED')].sort_values(by='end_time', ascending=False).head(1)
     recent_run_id = recent_run['run_id'].to_string().split()[1]
     
 
@@ -24,15 +24,15 @@ with mlflow.start_run() as run:
     
     metrics = run_info.data.metrics
     
-    actual_accuracy = round(metrics['accuracy'],5)
-    actual_recall = metrics['precision']
-    actual_precision = metrics['recall']
+    actual_accuracy = round(metrics['accuracy validation'],5)
+    actual_recall = metrics['precision validation']
+    actual_precision = metrics['recall validation']
 
     #metricas del mejor modelo
     
 
-    best_id_acc = runs[['run_id', 'metrics.accuracy']].loc[(runs['tags.mlflow.source.name'] == 'train_model.py') & (runs['status'] == 'FINISHED')].sort_values(by='metrics.accuracy', ascending=False).head(1)
-    best_accuracy = round(best_id_acc['metrics.accuracy'].to_numpy()[0], 5)
+    best_id_acc = runs[['run_id', 'metrics.accuracy validation']].loc[(runs['tags.mlflow.source.name'] == 'train_model.py') & (runs['status'] == 'FINISHED')].sort_values(by='metrics.accuracy validation', ascending=False).head(1)
+    best_accuracy = round(best_id_acc['metrics.accuracy validation'].to_numpy()[0], 5)
     best_run_id = best_id_acc['run_id'].to_string().split()[1]
     
     

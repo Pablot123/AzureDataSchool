@@ -17,7 +17,7 @@ parser.add_argument("--output_val_data", type=str, help="validation data directo
 args = parser.parse_args()
 
 transformed_data_path = args.input_data
-transformed_data_file = os.path.join(transformed_data_path, 'transformed_data.csv')
+transformed_data_file = os.path.join(transformed_data_path, 'clean_data.csv')
 
 def write_output(df, path, name_file):
     '''

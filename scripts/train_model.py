@@ -19,7 +19,7 @@ root_logger.addHandler(handler)
 
 parser = argparse.ArgumentParser("train")
 parser.add_argument('--input_data_train', type=str, help='training data')
-parser.add_argument('--input_data_val', type=str, help='validation_data')
+parser.add_argument('--input_data_val', type=str, help='validation data')
 
 parser.add_argument('--output_model', type=str, help='trained model' )
 
@@ -27,17 +27,36 @@ parser.add_argument('--output_model', type=str, help='trained model' )
 args = parser.parse_args()
 
 train_data_path = args.input_data_train
-train_data_file = os.path.join(train_data_path, 'train_data.csv')
+train_data_file = os.path.join(train_data_path, 'transformed_data_train.csv')
 
 val_data_path = args.input_data_val
-val_data_file = os.path.join(val_data_path, 'val_data.csv')
+val_data_file = os.path.join(val_data_path, 'transformed_data_val.csv')
+
+def all_metrics(y_true, y_pred):
+    '''
+    Retorna las metricas de presicion, recall, accuracy y 
+    la matriz de cofusion
+    input: y_true: muestras reales de la clase
+            y_pred: predicciones del modelo
+    output: tupla con el valor de recall precision, accuracy y
+            matriz de confusion respectivamente
+    '''
+    recall = recall_score(y_true,y_pred)
+    precision = precision_score(y_true, y_pred)
+    acc = accuracy_score(y_true, y_pred)
+    conf_matrix = confusion_matrix(y_true, y_pred)
+    return recall, precision, acc, conf_matrix
 
 
 with mlflow.start_run() as run:
-    df = pd.read_csv(train_data_file)
 
-    x = df.drop('Class', axis=1, inplace=False)
-    y = df['Class']
+    train_df = pd.read_csv(train_data_file)
+    X_train = train_df.drop('Class', axis=1, inplace=False)
+    y_train = train_df['Class']
+
+    val_df = pd.read_csv(val_data_file)
+    X_val = val_df.drop('Class', axis=1, inplace=False)
+    y_val = val_df['Class']
 
 
     param_dist ={
@@ -48,27 +67,27 @@ with mlflow.start_run() as run:
     }
     clf = RandomizedSearchCV(LogisticRegression(), param_dist, n_iter=5, random_state=0, refit='balanced_accuracy')
    
-    clf.fit(x,y)
+    clf.fit(X_train,y_train)
 
 
     
     mlflow.log_params(clf.best_params_)
 
-    y_pred = clf.predict(x)
+    y_pred_train = clf.predict(X_train)
+    y_pred_val = clf.predict(X_val)
 
-    recall = recall_score(y,y_pred)
-    precision = precision_score(y, y_pred)
-    acc = accuracy_score(y, y_pred)
-    conf_matrix = confusion_matrix(y, y_pred)
-  
 
-    logging.info(f'matriz de confusion{conf_matrix}')
+    recall_train, precision_train, acc_train, conf_matrix_train = all_metrics(y_train, y_pred_train)
+    recall_val, precision_val, acc_val, conf_matrix_val = all_metrics(y_val, y_pred_val)
 
     
     mlflow.log_metrics({
-        'recall':recall,
-        'precision': precision,
-        'accuracy': acc,
+        'recall train':recall_train,
+        'precision train': precision_train,
+        'accuracy train': acc_train,
+        'recall validation': recall_val,
+        'precision validation': precision_val,
+        'accuracy validation': acc_val
 
     })
     #model_uri = f"runs:/{run.info.run_id}/sklearn-model"
