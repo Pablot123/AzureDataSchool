@@ -4,6 +4,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
 from sklearn.metrics import precision_score, recall_score, accuracy_score, confusion_matrix
 from sklearn.model_selection import cross_validate, RandomizedSearchCV
+from src.utils import all_metrics
 from azureml.core import Run
 import pandas as pd
 import numpy as np
@@ -31,21 +32,6 @@ train_data_file = os.path.join(train_data_path, 'transformed_data_train.csv')
 
 val_data_path = args.input_data_val
 val_data_file = os.path.join(val_data_path, 'transformed_data_val.csv')
-
-def all_metrics(y_true, y_pred):
-    '''
-    Retorna las metricas de presicion, recall, accuracy y 
-    la matriz de cofusion
-    input: y_true: muestras reales de la clase
-            y_pred: predicciones del modelo
-    output: tupla con el valor de recall precision, accuracy y
-            matriz de confusion respectivamente
-    '''
-    recall = recall_score(y_true,y_pred)
-    precision = precision_score(y_true, y_pred)
-    acc = accuracy_score(y_true, y_pred)
-    conf_matrix = confusion_matrix(y_true, y_pred)
-    return recall, precision, acc, conf_matrix
 
 
 with mlflow.start_run() as run:
@@ -90,7 +76,7 @@ with mlflow.start_run() as run:
         'accuracy validation': acc_val
 
     })
-    #model_uri = f"runs:/{run.info.run_id}/sklearn-model"
+    
     mlflow.sklearn.log_model(sk_model = clf,
                              artifact_path = "sklearn-model")
 

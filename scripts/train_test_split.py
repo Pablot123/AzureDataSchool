@@ -5,6 +5,7 @@ from sklearn.model_selection import train_test_split
 from azureml.core import Dataset
 import os
 import pandas as pd
+from src.utils import write_output
 
 
 ws = Run.get_context().experiment.workspace
@@ -18,14 +19,6 @@ args = parser.parse_args()
 
 transformed_data_path = args.input_data
 transformed_data_file = os.path.join(transformed_data_path, 'clean_data.csv')
-
-def write_output(df, path, name_file):
-    '''
-    Escribe el dataset como csv en una ruta determinada
-    '''
-    os.makedirs(path, exist_ok=True)
-    df.to_csv(path+name_file, index=False, header=True)
-    mlflow.log_artifact(path+name_file)
 
 with mlflow.start_run():
 
