@@ -11,11 +11,20 @@ run = Run.get_context()
 
 ws = run.experiment.workspace
 
-raw_data_test = run.input_datasets['raw_test_data'].to_pandas_dataframe()
+#raw_data_test = run.input_datasets['raw_test_data'].to_pandas_dataframe()
+
+parser = argparse.ArgumentParser("transform")
+parser.add_argument('--input_data_test', type=str, help='test data')
+
+args = parser.parse_args()
 
 with mlflow.start_run():
+    test_data_path = args.input_data_test
+    test_data_file = os.path.join(test_data_path, 'transformed_data_test.csv')
 
-    transformed_data_test = dataset_transform(test_df=raw_data_test)
+    transformed_data_test = pd.read_csv(test_data_file)
+
+    #transformed_data_test = dataset_transform(test_df=raw_data_test) #Colocar en un step diferente
 
     #load the latest version of the model
     model_name = 'airlines_model'
@@ -28,11 +37,10 @@ with mlflow.start_run():
     acc = balanced_accuracy_score(transformed_data_test['Class'], pred)
     mlflow.log_metric('acc', acc)
 
-    #guardar en un archivo plano
     pred_df = pd.DataFrame(pred, columns=['predicted_Class'])
-    #output_path = os.path.join(args.output_preds, 'test_predictions.csv')
-    pred_df.to_csv('test_predictions.csv', index=False, header=True)
-    mlflow.log_artifact('test_predictions.csv')
+    pred_df.to_csv('predicted_class_test.csv',index=False, header=True)
+    mlflow.log_artifact('predicted_class_test.csv')
+
 
 
 
