@@ -6,8 +6,9 @@ from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.compose import ColumnTransformer
+from sklearn.metrics import recall_score, precision_score, accuracy_score, confusion_matrix
 import numpy as np
-import argparse
+
 import os
 
 def dataset_transform(train_df=pd.DataFrame([]), val_df=pd.DataFrame([]), test_df=pd.DataFrame([])):
@@ -73,5 +74,26 @@ def dataset_transform(train_df=pd.DataFrame([]), val_df=pd.DataFrame([]), test_d
 
 
 
+def all_metrics(y_true, y_pred):
+    '''
+    Retorna las metricas de presicion, recall, accuracy y 
+    la matriz de cofusion
+    input: y_true: muestras reales de la clase
+            y_pred: predicciones del modelo
+    output: tupla con el valor de recall precision, accuracy y
+            matriz de confusion respectivamente
+    '''
+    recall = recall_score(y_true,y_pred)
+    precision = precision_score(y_true, y_pred)
+    acc = accuracy_score(y_true, y_pred)
+    conf_matrix = confusion_matrix(y_true, y_pred)
+    return recall, precision, acc, conf_matrix
 
-    
+
+def write_output(df, path, name_file):
+    '''
+    Escribe el dataset como csv en una ruta determinada
+    '''
+    os.makedirs(path, exist_ok=True)
+    df.to_csv(path+name_file, index=False, header=True)
+    mlflow.log_artifact(path+name_file)
