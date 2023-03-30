@@ -2,7 +2,7 @@
 import azureml.core
 from azureml.core import Workspace, Dataset
 from azureml.core import Experiment
-from azureml.widgets import RunDetails
+#from azureml.widgets import RunDetails
 from azureml.core import  Environment
 from azureml.core.compute import ComputeTarget, ComputeInstance
 from azureml.core.compute_target import ComputeTargetException
