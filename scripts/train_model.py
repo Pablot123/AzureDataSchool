@@ -22,6 +22,7 @@ parser = argparse.ArgumentParser("train")
 parser.add_argument('--input_data_train', type=str, help='training data')
 parser.add_argument('--input_data_val', type=str, help='validation data')
 
+
 parser.add_argument('--output_model', type=str, help='trained model' )
 
 
@@ -32,6 +33,7 @@ train_data_file = os.path.join(train_data_path, 'transformed_data_train.csv')
 
 val_data_path = args.input_data_val
 val_data_file = os.path.join(val_data_path, 'transformed_data_val.csv')
+
 
 
 with mlflow.start_run() as run:

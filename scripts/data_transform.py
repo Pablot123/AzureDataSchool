@@ -6,22 +6,27 @@ from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.compose import ColumnTransformer
-from src.utils import dataset_transform
+from src.utils import dataset_transform, dataset_transform_prueba
 import numpy as np
 import argparse
 import os
+import joblib
 
 run = Run.get_context()
 
+#inputs datasets
 parser = argparse.ArgumentParser("transform")
 parser.add_argument('--input_data_train', type=str, help='train data')
 parser.add_argument('--input_data_val', type=str, help='val data')
 parser.add_argument('--input_data_test', type=str, help='val data')
 
-
+#output datasets
 parser.add_argument("--output_transform_train", type=str, help="transformed data train")
 parser.add_argument("--output_transform_val", type=str, help="transformed data test")
 parser.add_argument("--output_transform_test", type=str, help="transformed data train")
+
+#output scaler
+parser.add_argument("--output_scaler", type=str, help="scaler")
 
 args = parser.parse_args()
 
@@ -38,7 +43,19 @@ with mlflow.start_run():
         train_df = pd.read_csv(clean_data_train_file)
         val_df = pd.read_csv(clean_data_val_file)
     
-        transsformed_df_train, transsformed_df_val = dataset_transform(train_df = train_df, val_df=val_df)
+        transsformed_df_train, transsformed_df_val, preprocessor = dataset_transform(train_df = train_df, val_df=val_df)
+        
+        #save the encoder and scaler
+        os.makedirs(args.output_scaler, exist_ok=True)
+        print("%s created" % args.output_scaler)
+        path_scaler = args.output_scaler + "/scaler.pkl"
+        write_scaler = joblib.dump(preprocessor, path_scaler)
+        mlflow.log_artifact(path_scaler)
+
+        #joblib.dump(oh_encoder, 'oh_encoder.joblib')
+        
+        #mlflow.log_artifact('oh_encoder.joblib')
+        #mlflow.log_artifact('standarScaler.joblib')
 
         #saving train data transformed
         os.makedirs(args.output_transform_train, exist_ok=True)
@@ -57,6 +74,7 @@ with mlflow.start_run():
     else:
         test_data = run.input_datasets['raw_data_test'].to_pandas_dataframe()
         transsformed_df_test = dataset_transform(test_df=test_data)
+        
 
         os.makedirs(args.output_transform_test, exist_ok=True)
         print("%s created" % args.output_transform_test)
