@@ -1,6 +1,6 @@
 name: myenv
 dependencies:
-  - python=3.8.16
+  - python=3.9.16
   - scikit-learn
   - ipykernel
   - matplotlib
