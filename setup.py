@@ -170,18 +170,29 @@ pipeline_run.wait_for_completion(show_output=True)
 
 #Linkg workspace with mlflow
 
-dataset_test = Dataset.get_by_name(ws, name='airlines_test_data')
-transformed_data_test = OutputFileDatasetConfig('transformed_data_test')
+ws = Workspace.from_config()
+mlflow.set_tracking_uri(ws.get_mlflow_tracking_uri())
+
+dataset_test = Dataset.get_by_name(ws, name='data_to_predict')
+processed_data = OutputFileDatasetConfig('proccesed_data')
+
+tracking_step = PythonScriptStep(
+    name = 'traking',
+    script_name="scripts_inference/tracking.py", 
+    #arguments=["--output_data",processed_data],
+    inputs=[dataset_test.as_named_input('raw_data')],
+    compute_target=aml_compute,
+    runconfig=pipeline_run_config,
+    source_directory='./',
+    allow_reuse=True
+    )
 
 preprocess_step = PythonScriptStep(
     name = 'preprocessing',
-    script_name="scripts/data_transform.py", 
-    arguments=['--input_data_train', None,
-               '--input_data_val',None,
-               '--input_data_test', dataset_test.as_named_input('raw_data_test'),
-               "--output_transform_train", None,
-               "--output_transform_val", None,
-               "--output_transform_test",transformed_data_test],
+    script_name="scripts_inference/preprocess_data.py", 
+    arguments=["--output_data",processed_data],
+    inputs=[dataset_test.as_named_input('raw_data')],
+    outputs=[processed_data],
     compute_target=aml_compute,
     runconfig=pipeline_run_config,
     source_directory='./',
@@ -191,17 +202,21 @@ preprocess_step = PythonScriptStep(
 inference_step = PythonScriptStep(
     name = 'inference',
     script_name = 'scripts_inference/inference.py',
-    arguments = ['--input_data_test', transformed_data_test.as_input(name='processed_test_data')],
-    #inputs = [transformed_data_test.as_input(name='raw_test_data')],
+    arguments = ['--input_data', processed_data.as_input(name='processed_data')],
+    #inputs = [processed_data],
+    compute_target=aml_compute,
     runconfig=pipeline_run_config,
     source_directory='./',
     allow_reuse=True
 )
 
 # Construct the pipeline
-pipeline_steps_inference = [preprocess_step ,inference_step]
+
+# Construct the pipeline
+pipeline_steps_inference = [tracking_step, preprocess_step ,inference_step]
 pipeline_inference = Pipeline(workspace=ws, steps=pipeline_steps_inference)
 print("Pipeline is built.")
+
 
 # Create an experiment and run the pipeline
 experiment = Experiment(workspace=ws, name = 'exp-Airlines_inference')

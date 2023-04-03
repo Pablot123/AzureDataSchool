@@ -97,63 +97,12 @@ def write_output(df, path, name_file):
     df.to_csv(path+name_file, index=False, header=True)
     mlflow.log_artifact(path+name_file)
 
-def dataset_transform_prueba(train_df=pd.DataFrame([]), val_df=pd.DataFrame([]), test_df=pd.DataFrame([])):
-
-    numeric_columns = ['Length','Time']
-    category_columns = ['Airline', 'AirportFrom', 'AirportTo', 'DayOfWeek']
+def difference_btw_data(main_df:pd.DataFrame, new_df:pd.DataFrame):
     
-    oh_encoder = OneHotEncoder(handle_unknown='ignore', sparse_output=False, drop='first')
-    sc = StandardScaler()
+    train_data = set(main_df.to_list())
 
-    if (not(train_df.empty) and not(val_df.empty) and test_df.empty):
-        
-        #transforming train data
-        X_train = train_df.drop('Class', axis=1, inplace=False)
-        y_train = train_df['Class']
+    new_data = set(new_df.to_list())
 
-        X_train_oh = oh_encoder.fit_transform(X_train[category_columns])
-        X_train_sc = sc.fit_transform(X_train[numeric_columns])
-        one_hot_columns_name = oh_encoder.get_feature_names_out()
+    diff = list(new_data.difference(train_data))
 
-        train_oh_df = pd.DataFrame(data = X_train_oh, columns = one_hot_columns_name)
-        train_sc_df = pd.DataFrame(data = X_train_sc, columns=numeric_columns)
-
-        train_df = pd.concat([train_sc_df, train_oh_df, y_train], axis=1)
-
-        #transformig val data
-        X_val = val_df.drop('Class', axis=1, inplace=False)
-        y_val = val_df['Class']
-
-        X_val_oh = oh_encoder.transform(X_val[category_columns])
-        X_val_sc = sc.transform(X_val[numeric_columns])
-        one_hot_columns_name = oh_encoder.get_feature_names_out()
-
-        val_oh_df = pd.DataFrame(data = X_val_oh, columns = one_hot_columns_name)
-        val_sc_df = pd.DataFrame(data = X_val_sc, columns=numeric_columns)
-
-        val_df = pd.concat([val_sc_df, val_oh_df, y_val], axis=1)
-
-        return train_df, val_df, oh_encoder, sc
-    
-    elif (train_df.empty and val_df.empty and not(test_df.empty)):
-        test_df.reset_index(inplace=True)
-        
-        X_test= test_df.drop('Class', axis=1, inplace=False)
-        y_test = test_df['Class']
-      
-        sc_t = joblib.load('standarScaler.joblib')
-        oh_t = joblib.load('oh_encoder.joblib')
-
-        sc_data_test = sc_t.transform(X_test[numeric_columns])
-        oh_data_test = oh_t.transform(X_test[category_columns])
-        one_hot_columns_name_test = oh_t.get_feature_names_out()
-
-        test_oh_df = pd.DataFrame(data = oh_data_test, columns = one_hot_columns_name_test)
-        test_sc_df = pd.DataFrame(data = sc_data_test, columns=numeric_columns)
-
-        test_df_p = pd.concat([test_sc_df, test_oh_df, y_test], axis=1)
-
-        return test_df_p
-    
-    else:
-        return 'Worng combination'
+    return diff

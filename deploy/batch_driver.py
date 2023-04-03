@@ -1,0 +1,41 @@
+import os
+import mlflow
+import pandas as pd
+import numpy as np
+
+
+def init():
+    global model
+    global preprocess
+    # AZUREML_MODEL_DIR is an environment variable created during deployment
+    # It is the path to the model folder
+    # Please provide your model's folder name if there's one
+    #model_path = os.path.join(os.environ["AZUREML_MODEL_DIR"], "model")
+    model_name = 'airlines_model'
+    model = mlflow.sklearn.load(f'models:/{model_name}/latest')
+    preprocess_name = 'scaler'
+    preprocess = mlflow.sklearn.load_model(f'models:/{preprocess_name}/latest')
+
+    
+
+
+def run(mini_batch):
+    #print(f"run method start: {__file__}, run({len(mini_batch)} files)")
+    resultList = []
+    numeric_columns = ['Length','Time']
+    category_columns = ['Airline', 'AirportFrom', 'AirportTo', 'DayOfWeek']
+
+    for file_path in mini_batch:
+        data = pd.read_csv(file_path)
+        prueba = preprocess.transform(data.drop('Flight', axis=1, inplace=False))
+        encoded_category = preprocess.named_transformers_['cat']['onehot'].get_feature_names_out(category_columns)
+        labels = np.concatenate([numeric_columns, encoded_category])    
+        prueba_df_all = pd.DataFrame(data=prueba, columns=labels)
+
+        pred = model.predict(prueba_df_all)
+
+        df = pd.DataFrame(pred, columns=["predictions"])
+        df["file"] = os.path.basename(file_path)
+        resultList.extend(df.values)
+
+    return resultList

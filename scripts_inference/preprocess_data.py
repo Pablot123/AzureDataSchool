@@ -6,7 +6,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.compose import ColumnTransformer
-from src.utils import dataset_transform, dataset_transform_prueba
+from src.utils import dataset_transform
 import numpy as np
 import argparse
 import os
@@ -25,17 +25,14 @@ args = parser.parse_args()
 
 with mlflow.start_run():
     test_data = run.input_datasets['raw_data'].to_pandas_dataframe()
-    #transsformed_df_test = dataset_transform(test_df=test_data)
-
-    #test_data_X = test_data.drop('Class', axis=1, inplace=False)
-    #test_data_y = test_data['Class']
+    
     preprocess_name = 'scaler'
     preprocess = mlflow.sklearn.load_model(f'models:/{preprocess_name}/latest')
 
     numeric_columns = ['Length','Time']
     category_columns = ['Airline', 'AirportFrom', 'AirportTo', 'DayOfWeek']
 
-    prueba = preprocess.transform(test_data)
+    prueba = preprocess.transform(test_data.drop('Flight', axis=1, inplace=False))
     encoded_category = preprocess.named_transformers_['cat']['onehot'].get_feature_names_out(category_columns)
     labels = np.concatenate([numeric_columns, encoded_category])    
     prueba_df_all = pd.DataFrame(data=prueba, columns=labels)
