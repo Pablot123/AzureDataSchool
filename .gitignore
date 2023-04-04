@@ -4,3 +4,4 @@ config.json
 /outputs
 train_data.csv
 pruebas.ipynb
+/dataToPredict
