@@ -16,7 +16,7 @@ def init():
     preprocess_name = 'scaler'
     preprocess = mlflow.sklearn.load_model(f'models:/{preprocess_name}/latest')
 
-'''
+
 def run(mini_batch):
     #print(f"run method start: {__file__}, run({len(mini_batch)} files)")
     result_list = []
@@ -43,8 +43,4 @@ def run(mini_batch):
     df = pd.DataFrame(data={'Path':result_list_path, 'Pred':result_list})
     df.to_csv('predictions.csv', header=True, index=False)
     
-    return df'''
-
-def run(inp):
-
-    return inp
+    return df
